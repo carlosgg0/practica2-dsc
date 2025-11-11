@@ -1,0 +1,57 @@
+version: "3"
+services:
+  web:
+    # replace username/repo:tag with your name and image details
+    image: carlosgg0/friendlyhello:latest
+    deploy:
+      replicas: 5
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "4000:80"
+    environment:
+      - REDIS_HOST=redis
+    networks:
+      - webnet
+  
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - webnet
+  
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"   
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - webnet
+  
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - redis 
+    networks:
+      - webnet
+    environment:
+      - REDIS_HOST=redis
+    #GF_INSTALL_PLUGINS: redis-datasource
+
+volumes:
+  grafana_data:
+
+networks:
+  webnet:
