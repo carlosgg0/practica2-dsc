@@ -1,5 +1,4 @@
-from sqlite3.dbapi2 import Timestamp
-from flask import Flask, jsonify, request
+from flask import Flask, request
 from redis import Redis, RedisError
 import os
 import socket
@@ -39,6 +38,7 @@ def store_data():
         return "<i> Cannot connect to Redis </i>"
         
     return "<h1>Nuevo valor introducido</h1>" 
+        
         
 @app.route("/listar")
 def listar():
