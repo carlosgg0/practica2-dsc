@@ -5,11 +5,11 @@ import os
 import socket
 
 
-# Connect to Redis
-REDIS_HOST = os.getenv('REDIS_HOST', "localhost")
-print("REDIS_HOST: " + REDIS_HOST)
-redis = Redis(host=REDIS_HOST, db=1, socket_connect_timeout=2, socket_timeout=2)
+PORT = os.getenv("PORT", 80)
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 
+# Connect to redis
+redis = Redis(host=REDIS_HOST, db=1, socket_connect_timeout=2, socket_timeout=2)
 redis.flushdb()
 
 # Create Flask application 
@@ -24,9 +24,10 @@ def hello():
         visits = "<i>cannot connect to Redis, counter disabled</i>"
 
     html = "<h3>Hello {name}!</h3>" \
-           "<b>Hostname:</b> {hostname}<br/>" \
-           "<b>Visits:</b> {visits}"
-    return html.format(name=os.getenv("NAME", "world"), hostname=socket.gethostname(), visits=visits)
+        "<b>Hostname:</b> {hostname}<br/>" \
+        "<b>Visits:</b> {visits}"
+    
+    return html.format(name="world", hostname=socket.gethostname(), visits=visits)
 
 
 @app.route("/nuevo", methods=["GET"])
@@ -35,7 +36,7 @@ def store_data():
     try:
         redis.ts().add(key="values", timestamp='*', value=valor)
     except RedisError:
-        return "<i> Cannot connect to Redis! </i>"
+        return "<i> Cannot connect to Redis </i>"
         
     return "<h1>Nuevo valor introducido</h1>" 
         
@@ -55,7 +56,9 @@ def listar():
         return "<i> There's no data to display! </i>"
 
 
+def main():
+    app.run(host="0.0.0.0", port=PORT)
+
+
 if __name__ == "__main__":
-    PORT = os.getenv('PORT', 8080)
-    print("PORT: "+str(PORT))
-    app.run(host='0.0.0.0', port=PORT)
+    main()

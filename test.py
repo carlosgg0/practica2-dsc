@@ -1,3 +1,5 @@
+from os import wait
+from time import sleep
 import requests
 import random
 
@@ -8,6 +10,7 @@ rand_nums = [random.random() for _ in range(N)]
 for val in rand_nums:
     try:
         r = requests.get(BASE_URL + f"/nuevo?dato={val}")
+        sleep(2)
     except ConnectionError:
         print("Hubo un error")
         exit(-1)
