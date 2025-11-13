@@ -11,7 +11,6 @@ import pandas as pd
 
 
 WINDOW_SIZE = 24
-
 PORT = os.getenv("PORT", 80)
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 
@@ -25,11 +24,6 @@ app = Flask(__name__)
 # Load the model and the scaler
 model = load_model("modelo.keras")
 scaler = joblib.load("scaler.pkl")
-
-# The array in which we will store exactly WINDOW_SIZE measurements
-# to make predictions
-measures = []
-
 
 @app.route("/")
 def hello():
@@ -77,24 +71,30 @@ def detectar():
     valor = request.args.get('dato')
     try:
         redis.ts().add(key="values", timestamp='*', value=valor)
-    except RedisError:
-        return "<i> Something went bad, please try again </i>"
     
-    size = redis.ts().info(key="values")["total_samples"]
-    last_timestamp = redis.ts().get(key="values")[0]
     
-    print("Size:", size)
-    print("Last timestamp:", last_timestamp)
+        size = redis.ts().info(key="values")["total_samples"]
+        last_timestamp = redis.ts().get(key="values")[0]
+        
+        print("Size:", size)
+        print("Last timestamp:", last_timestamp)
 
-    if size <= WINDOW_SIZE:
-        measures = np.append(measures, valor)
-        return "<i> There are not enough measures! </i>"
-    else:  
-        measures = measures[-WINDOW_SIZE : ]
-        print(measures.shape)
-        prediction = model.predict(measures)
-        return str(prediction)
-    
+        if size <= WINDOW_SIZE:
+            return "<i> There are not enough measures! </i>"
+        else:  
+            data = redis.ts().revrange("values", "-", "+", count=WINDOW_SIZE)
+            data.reverse()
+            measures = [float(val[1]) for val in data]
+            measures_array = np.array(measures).reshape(-1, 1)
+            prediction = model.predict(measures_array)
+            return f"<h1> Prediction: {prediction[0][0]} </h1>"
+        
+    except RedisError as e:
+        print(e)
+        return "<i> Something went bad with Redis, please try again </i>"
+    except Exception as e:
+        print(e)
+        return "<i> An error ocurred </i>"
 
 def main():
     app.run(host="0.0.0.0", port=PORT)
