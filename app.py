@@ -14,6 +14,10 @@ WINDOW_SIZE = 24
 PORT = os.getenv("PORT", 80)
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 
+with open("threshold.txt", "r") as f:
+    THRESHOLD = float(f.readlines(1)[0]) 
+
+
 # Connect to redis
 redis = Redis(host=REDIS_HOST, db=1, socket_connect_timeout=2, socket_timeout=2)
 redis.flushdb()
@@ -68,32 +72,57 @@ def listar():
 
 @app.route("/detectar", methods=["GET"])
 def detectar():
-    valor = request.args.get('dato')
     try:
-        redis.ts().add(key="values", timestamp='*', value=valor)
+        # Comprobamos que dato sea un valor numérico
+        valor = float(request.args.get('dato'))
+    except ValueError:
+        return "<i> Error: dato must be a number </i>"
     
-    
-        size = redis.ts().info(key="values")["total_samples"]
-        last_timestamp = redis.ts().get(key="values")[0]
-        
-        print("Size:", size)
-        print("Last timestamp:", last_timestamp)
+    # Añadimos el valor a la serie temporal
+    redis.ts().add(key="values", timestamp='*', value=valor)
 
+    try:
+        size = redis.ts().info(key="values")["total_samples"]
+        
         if size <= WINDOW_SIZE:
-            return "<i> There are not enough measures! </i>"
+            
+            return f"<i> There are not enough measures! {size} measures </i>"
         else:  
-            data = redis.ts().revrange("values", "-", "+", count=WINDOW_SIZE)
+            # Consultamos las últimas WINDOW_SIZE mediciones para dar una predicción
+            # Nótese que no cogemos el último valor, pues este es el valor real a predecir
+            data = redis.ts().revrange("values", "-", "+", count=WINDOW_SIZE + 1)[:-1] 
             data.reverse()
-            measures = [float(val[1]) for val in data]
-            measures_array = np.array(measures).reshape(-1, 1)
-            prediction = model.predict(measures_array)
-            return f"<h1> Prediction: {prediction[0][0]} </h1>"
+            
+            measures = np.array([float(val[1]) for val in data])
+
+            # Aplicamos un escalado de los datos
+            measures_scaled = scaler.transform(measures.reshape(-1, 1))
+
+            prediction_input = measures_scaled.reshape(1, WINDOW_SIZE, 1)
+            
+            # Realizamos la predicción teniendo en cuenta las medidas
+            prediction_scaled = model.predict(prediction_input)
+            predicted_value = scaler.inverse_transform(prediction_scaled)[0][0]
+
+            # Calculamos el error cometido para ver si es una anomalía
+            error = abs(valor - predicted_value)
+            
+            if error > THRESHOLD:
+                return f"<h1> ANOMALY DETECTED! </h1>" \
+                    f"Actual: {valor}<br>" \
+                    f"Predicted: {predicted_value:.2f}<br>" \
+                    f"Error: {error:.2f}"
+            else:
+                return f"<h1>Value is Normal</h1>" \
+                    f"Actual: {valor}<br>" \
+                    f"Predicted: {predicted_value:.2f}<br>" \
+                    f"Error: {error:.2f}"
         
     except RedisError as e:
         print(e)
         return "<i> Something went bad with Redis, please try again </i>"
     except Exception as e:
-        print(e)
+        print(e.with_traceback())
         return "<i> An error ocurred </i>"
 
 def main():

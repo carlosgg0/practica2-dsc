@@ -1,7 +1,7 @@
 version: "3"
 services:
   web:
-    image: carlosgg0/practica2:part0
+    image: carlosgg0/practica2:part1
     deploy:
       replicas: 5
       restart_policy:
