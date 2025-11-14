@@ -2,15 +2,14 @@ from time import sleep
 import requests
 import random
 
-BASE_URL = "http://localhost:4000/"
+BASE_URL = "http://localhost/"
 N = 100
 
 while True:
     try: 
-        val = random.gauss(71.24, 8)
+        val = random.random()
         print("Introduciendo", val, "...")
-        r = requests.get(BASE_URL + f"/detectar?dato={val}")
-        print(r.content)
+        r = requests.get(BASE_URL + f"/nuevo?dato={val}")
         sleep(1)
     except ConnectionError:
         print("Hubo un error")

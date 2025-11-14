@@ -2,7 +2,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-ADD . /appd
+COPY src/ /app 
+COPY requirements.txt /app
 
 RUN pip install -r requirements.txt
 
