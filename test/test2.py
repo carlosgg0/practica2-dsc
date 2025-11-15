@@ -3,7 +3,6 @@ import requests
 import random
 
 BASE_URL = "http://localhost/"
-N = 100
 
 while True:
     try: 

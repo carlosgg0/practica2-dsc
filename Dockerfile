@@ -1,5 +1,9 @@
 FROM python:3.12-slim
 
+WORKDIR /app/models
+
+COPY models/ /app/models/
+
 WORKDIR /app
 
 COPY src/ /app 
