@@ -2,6 +2,7 @@ from flask import Flask, request
 from redis import Redis, RedisError
 from datetime import datetime
 from keras.saving import load_model
+from redis.sentinel import Sentinel
 import os
 import socket
 import joblib
@@ -24,8 +25,17 @@ with open("models/threshold.txt", "r") as f:
 
 
 # Conexión con Redis
-redis = Redis(host=REDIS_HOST, db=0, socket_connect_timeout=2, socket_timeout=2)
-redis.flushdb()
+# redis = Redis(host=REDIS_HOST, db=0, socket_connect_timeout=2, socket_timeout=2)
+# redis.flushdb()
+
+sentinels_list = [(SENTINEL_HOST1, SENTINEL_PORT1),
+            (SENTINEL_HOST2, SENTINEL_PORT2),
+            (SENTINEL_HOST3, SENTINEL_PORT3)]
+
+sentinel = Sentinel(sentinels=sentinels_list, socket_timeout=0.1)
+
+master_info = sentinel.discover_master("my_master")
+redis = sentinel.master_for("my_master", socket_timeout=0.1)
 
 # Instancia de la aplicación Flask 
 app = Flask(__name__)
