@@ -1,6 +1,6 @@
 services:
   web:    
-    image: carlosgg0/practica2:parte2
+    image: carlosgg0/practica2:parte3
     ports:
       - "80:80"
     networks:
@@ -8,12 +8,12 @@ services:
         ipv4_address: 172.30.0.8
 
     environment:
-      - SENTINEL_HOST=sentinel1
+      - SENTINEL_HOST1=sentinel1
       - SENTINEL_HOST2=sentinel2
       - SENTINEL_HOST3=sentinel3
-      - SENTINEL_PORT=26379
-      - SENTINEL_PORT2=26380
-      - SENTINEL_PORT3=26381
+      - SENTINEL_PORT1=26379
+      - SENTINEL_PORT2=26379
+      - SENTINEL_PORT3=26379
 
 
   redis-master:

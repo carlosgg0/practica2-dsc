@@ -1,5 +1,5 @@
 from flask import Flask, request
-from redis import Redis, RedisError
+from redis import RedisError
 from datetime import datetime
 from keras.saving import load_model
 from redis.sentinel import Sentinel
@@ -7,12 +7,19 @@ import os
 import socket
 import joblib
 import numpy as np
-import pandas as pd
 
 
+# Variables de entorno
+
+SENTINEL_HOST1 = os.getenv("SENTINEL_HOST1", "sentinel1")
+SENTINEL_HOST2 = os.getenv("SENTINEL_HOST2", "sentinel2")
+SENTINEL_HOST3 = os.getenv("SENTINEL_HOST3", "sentinel3")
+
+SENTINEL_PORT1 = int(os.getenv("SENTINEL_PORT1", 26379))
+SENTINEL_PORT2 = int(os.getenv("SENTINEL_PORT2", 26379))
+SENTINEL_PORT3 = int(os.getenv("SENTINEL_PORT3", 26379))
 
 FLASK_PORT = os.getenv("FLASK_PORT", 80)
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost") 
 
 # Tamaño de ventana para las predicciones y carga del modelo
 WINDOW_SIZE = 24
@@ -22,11 +29,7 @@ scaler = joblib.load("models/scaler.pkl")
 # Establecemos el umbral de error para clasificar anomalías
 with open("models/threshold.txt", "r") as f:
     THRESHOLD = float(f.readlines(1)[0])
-
-
-# Conexión con Redis
-# redis = Redis(host=REDIS_HOST, db=0, socket_connect_timeout=2, socket_timeout=2)
-# redis.flushdb()
+    
 
 sentinels_list = [(SENTINEL_HOST1, SENTINEL_PORT1),
             (SENTINEL_HOST2, SENTINEL_PORT2),
@@ -34,8 +37,11 @@ sentinels_list = [(SENTINEL_HOST1, SENTINEL_PORT1),
 
 sentinel = Sentinel(sentinels=sentinels_list, socket_timeout=0.1)
 
-master_info = sentinel.discover_master("my_master")
-redis = sentinel.master_for("my_master", socket_timeout=0.1)
+master_info = sentinel.discover_master("mymaster")
+print(f"El maestro actual es {master_info}")
+
+redis = sentinel.master_for("mymaster", socket_timeout=0.1)
+
 
 # Instancia de la aplicación Flask 
 app = Flask(__name__)
