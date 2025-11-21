@@ -25,6 +25,8 @@ Si se desea se puede automatizar la inserción de datos mediante el fichero `tes
 
 La ejecución de la parte 2 es análoga a la anterior, pero se debe referenciar en el fichero `compose.yaml` (descomentar la linea donde se hace referencia a dicha imagen).
 
+De nuevo si se desea, se puede utilizar el script `test2.py`.
+
 ## Ejecución de la parte 3
 
 La ejecución de la parte 3 se puede hacer gracias al fichero `docker-compose-sentinel.yaml`.
