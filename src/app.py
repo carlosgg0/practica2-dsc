@@ -21,16 +21,21 @@ SENTINEL_PORT3 = int(os.getenv("SENTINEL_PORT3", 26379))
 
 FLASK_PORT = os.getenv("FLASK_PORT", 80)
 
+
+
 # Tamaño de ventana para las predicciones y carga del modelo
 WINDOW_SIZE = 24
 model = load_model("models/modelo.keras")
 scaler = joblib.load("models/scaler.pkl")
 
+
+
 # Establecemos el umbral de error para clasificar anomalías
 with open("models/threshold.txt", "r") as f:
     THRESHOLD = float(f.readlines(1)[0])
-    
 
+
+    
 sentinels_list = [(SENTINEL_HOST1, SENTINEL_PORT1),
             (SENTINEL_HOST2, SENTINEL_PORT2),
             (SENTINEL_HOST3, SENTINEL_PORT3)]

@@ -1,6 +1,8 @@
 version: "3"
 services:
   web:
+    # Si se quiere ejecutar la parte 1
+    # image: carlosgg0/practica2:parte1
     image: carlosgg0/practica2:parte2
     deploy:
       replicas: 5
