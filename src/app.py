@@ -73,12 +73,9 @@ startup_nodes = [
 redis = RedisCluster(
     startup_nodes=startup_nodes,
     decode_responses=True,
-    skip_full_coverage_check=True,
-    socket_timeout=5,
-    socket_connect_timeout=5,
+    skip_full_coverage_check=True
 )
-
-
+    
 # --------------------------------------------------------------
 
 

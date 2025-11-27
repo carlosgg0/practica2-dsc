@@ -1,6 +1,7 @@
 services:
   web:    
-    image: "carlosgg0/practica2:parte3.1"
+    #image: "carlosgg0/practica2:parte3.1"
+    build: .
     ports:
       - "80:80"
     networks:
@@ -12,6 +13,9 @@ services:
       - REDIS_HOST2=redis-node-2
       - REDIS_HOST3=redis-node-3
 
+    depends_on:
+      redis-cluster-init:
+        condition: service_completed_successfully
 
   # Nodos del Clúster de Redis (incluyen Redis Stack, por lo tanto RedisTimeSeries)
   redis-node-1: &redis_node_config
@@ -109,7 +113,7 @@ services:
 
 
 
-# Servicio para inicializar el clúster
+  # Servicio para inicializar el clúster
   redis-cluster-init:
     image: redis/redis-stack:latest
     command: >
@@ -124,6 +128,10 @@ services:
     networks:
       redis-cluster-net:
         ipv4_address: 172.19.0.9 
+
+
+
+  
 
 networks:
   redis-cluster-net:
