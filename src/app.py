@@ -78,15 +78,18 @@ redis = RedisCluster(
     socket_connect_timeout=5,
 )
 
-redis.flushdb()
 
 # --------------------------------------------------------------
 
 
+redis.flushdb() 
 
-FLASK_PORT = os.getenv("FLASK_PORT", 80)
+
 # Instancia de la aplicación Flask 
+FLASK_PORT = os.getenv("FLASK_PORT", 80)
 app = Flask(__name__)
+
+
 
 @app.route("/")
 def hello():
