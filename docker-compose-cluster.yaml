@@ -1,7 +1,6 @@
 services:
   web:    
-    #image: "carlosgg0/practica2:parte3.1"
-    build: .
+    image: "carlosgg0/practica2:parte3.1"
     ports:
       - "80:80"
     networks:
