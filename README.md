@@ -4,9 +4,9 @@
 
 Si se desea, se pueden instalar las dependencias necesarias para ejecutar los scripts de tests:
 
-```console
+```bash
 pip install requirements.txt
-````
+```
 
 ## Ejecución de la parte 1
 
@@ -14,7 +14,7 @@ Para el despliegue de la parte 1 de la práctica, se debe descomentar la línea 
 
 Los comandos para el despliegue mediante docker swarm serían los siguientes:
 
-```console
+```bash
 docker swarm init
 docker stack deploy -c compose.yaml up
 ```
@@ -29,9 +29,18 @@ De nuevo si se desea, se puede utilizar el script `test2.py`.
 
 ## Ejecución de la parte 3
 
+### Redis Sentinel
+
 La ejecución de la parte 3 se puede hacer gracias al fichero `docker-compose-sentinel.yaml`.
 
-```console
+```bash
 docker compose -f docker-compose-sentinel.yaml up
 ```
 
+### Redis Cluster
+
+El despliegue de esta parte se logra mediante el fichero `docker-compose-cluster.yaml`.
+
+```bash
+docker compose -f docker-compose-cluster.yaml up
+```

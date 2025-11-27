@@ -1,5 +1,6 @@
 from flask import Flask, request
-from redis import RedisError
+from redis import RedisError, Redis
+from redis.cluster import RedisCluster, ClusterNode
 from datetime import datetime
 from keras.saving import load_model
 from redis.sentinel import Sentinel
@@ -9,25 +10,10 @@ import joblib
 import numpy as np
 
 
-# Variables de entorno
-
-SENTINEL_HOST1 = os.getenv("SENTINEL_HOST1", "sentinel1")
-SENTINEL_HOST2 = os.getenv("SENTINEL_HOST2", "sentinel2")
-SENTINEL_HOST3 = os.getenv("SENTINEL_HOST3", "sentinel3")
-
-SENTINEL_PORT1 = int(os.getenv("SENTINEL_PORT1", 26379))
-SENTINEL_PORT2 = int(os.getenv("SENTINEL_PORT2", 26379))
-SENTINEL_PORT3 = int(os.getenv("SENTINEL_PORT3", 26379))
-
-FLASK_PORT = os.getenv("FLASK_PORT", 80)
-
-
-
 # Tamaño de ventana para las predicciones y carga del modelo
 WINDOW_SIZE = 24
 model = load_model("models/modelo.keras")
 scaler = joblib.load("models/scaler.pkl")
-
 
 
 # Establecemos el umbral de error para clasificar anomalías
@@ -35,19 +21,70 @@ with open("models/threshold.txt", "r") as f:
     THRESHOLD = float(f.readlines(1)[0])
 
 
-    
-sentinels_list = [(SENTINEL_HOST1, SENTINEL_PORT1),
-            (SENTINEL_HOST2, SENTINEL_PORT2),
-            (SENTINEL_HOST3, SENTINEL_PORT3)]
 
-sentinel = Sentinel(sentinels=sentinels_list, socket_timeout=0.1)
+# --------------------REDIS-------------------------------------
 
-master_info = sentinel.discover_master("mymaster")
-print(f"El maestro actual es {master_info}")
+# REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+# redis = Redis(host=REDIS_HOST, db=0, socket_connect_timeout=2, socket_timeout=2)
 
-redis = sentinel.master_for("mymaster", socket_timeout=0.1)
+# --------------------------------------------------------------
 
 
+
+# --------------------REDIS SENTINEL----------------------------
+
+# SENTINEL_HOST1 = os.getenv("SENTINEL_HOST1", "sentinel1")
+# SENTINEL_HOST2 = os.getenv("SENTINEL_HOST2", "sentinel2")
+# SENTINEL_HOST3 = os.getenv("SENTINEL_HOST3", "sentinel3")
+
+# SENTINEL_PORT1 = int(os.getenv("SENTINEL_PORT1", 26379))
+# SENTINEL_PORT2 = int(os.getenv("SENTINEL_PORT2", 26379))
+# SENTINEL_PORT3 = int(os.getenv("SENTINEL_PORT3", 26379))
+
+# sentinels_list = [(SENTINEL_HOST1, SENTINEL_PORT1),
+#             (SENTINEL_HOST2, SENTINEL_PORT2),
+#             (SENTINEL_HOST3, SENTINEL_PORT3)]
+
+# sentinel = Sentinel(sentinels=sentinels_list, socket_timeout=0.1)
+
+# master_info = sentinel.discover_master("mymaster")
+# print(f"El maestro actual es {master_info}")
+
+# redis = sentinel.master_for("mymaster", socket_timeout=0.1)
+
+# --------------------------------------------------------------
+
+
+
+# --------------------REDIS CLUSTER-----------------------------
+
+h1 = os.getenv("REDIS_HOST1", "redis-node-1")
+h2 = os.getenv("REDIS_HOST2", "redis-node-2")
+h3 = os.getenv("REDIS_HOST3", "redis-node-3")
+
+port = 6379
+
+startup_nodes = [
+    ClusterNode(h1, port),
+    ClusterNode(h2, port),
+    ClusterNode(h3, port)
+]
+
+redis = RedisCluster(
+    startup_nodes=startup_nodes,
+    decode_responses=True,
+    skip_full_coverage_check=True,
+    socket_timeout=5,
+    socket_connect_timeout=5,
+)
+
+redis.flushdb()
+
+# --------------------------------------------------------------
+
+
+
+FLASK_PORT = os.getenv("FLASK_PORT", 80)
 # Instancia de la aplicación Flask 
 app = Flask(__name__)
 
@@ -117,7 +154,7 @@ def detectar():
 
     try:
         size = redis.ts().info(key="values")["total_samples"]
-        
+
         if size <= WINDOW_SIZE:
             
             return f"<i> No hay suficientes medidas: {size} medidas </i>"
